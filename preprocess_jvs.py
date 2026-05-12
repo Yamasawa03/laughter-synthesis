@@ -1,5 +1,6 @@
 import os
 import hydra
+import hydra.utils
 import librosa
 import utils
 import numpy as np
@@ -18,10 +19,30 @@ from preprocessor import Preprocessor
 
 @hydra.main(config_path='config', config_name='default')
 def preprocess(cfg):
+    orig_cwd = hydra.utils.get_original_cwd()
+
+    def resolve_path(path):
+        return path if os.path.isabs(path) else os.path.join(orig_cwd, path)
+
     if 'jvs' not in cfg.preprocess.path:
         cfg = OmegaConf.load(join(dirname(__file__), 'config', 'preprocess', 'jvs.yaml'))
     else:
         cfg = cfg.preprocess
+    cfg.path.jvs.path = resolve_path(cfg.path.jvs.path)
+    cfg.path.processed_path = resolve_path(cfg.path.processed_path)
+    cfg.view.kmeans_filelist = resolve_path(cfg.view.kmeans_filelist)
+    cfg.view.train_filelist = resolve_path(cfg.view.train_filelist)
+    cfg.view.val_filelist = resolve_path(cfg.view.val_filelist)
+    cfg.view.test_filelist = resolve_path(cfg.view.test_filelist)
+    cfg.code.model_path = resolve_path(cfg.code.model_path)
+    cfg.code.code_path = resolve_path(cfg.code.code_path)
+    for filelist_path in (
+        cfg.view.kmeans_filelist,
+        cfg.view.train_filelist,
+        cfg.view.val_filelist,
+        cfg.view.test_filelist,
+    ):
+        os.makedirs(dirname(filelist_path), exist_ok=True)
     filelist = []
 
     jvs = JVS(cfg.path.jvs.path)
@@ -30,7 +51,7 @@ def preprocess(cfg):
     print(f'Collected {len(filelist)} files')
 
     # resample the audio to 16 khz
-    os.makedirs('data', exist_ok=True)
+    os.makedirs(join(orig_cwd, 'data'), exist_ok=True)
     tgt_dir = join(cfg.path.processed_path)
     os.makedirs(tgt_dir, exist_ok=True)
     tgt_wav_dir = join(tgt_dir, 'wav')
@@ -66,13 +87,13 @@ def preprocess(cfg):
         write_filelist(kmeans_files, cfg.view.kmeans_filelist)
 
     # generate code
-    os.makedirs('ckpt', exist_ok=True)
-    os.makedirs('codes', exist_ok=True)
+    os.makedirs(join(orig_cwd, 'ckpt'), exist_ok=True)
+    os.makedirs(join(orig_cwd, 'codes'), exist_ok=True)
     gpu_id = os.environ.get("LS_GPU_ID", "0")
-    cmd = f'CUDA_VISIBLE_DEVICES={gpu_id} python3 speech2unit.py --train-filelist {cfg.view.kmeans_filelist} --nclusters {cfg.code.nclusters} --feature-type hubert --model-path facebook/hubert-base-ls960 --layer {cfg.code.layer} --test-filelist {cfg.view.kmeans_filelist} --kmeans-path {cfg.code.model_path} --code-path {cfg.code.code_path} --pretrained-kmeans {cfg.code.model_path}'
+    cmd = f'CUDA_VISIBLE_DEVICES={gpu_id} python3 {join(orig_cwd, "speech2unit.py")} --train-filelist {cfg.view.kmeans_filelist} --nclusters {cfg.code.nclusters} --feature-type hubert --model-path facebook/hubert-base-ls960 --layer {cfg.code.layer} --test-filelist {cfg.view.kmeans_filelist} --kmeans-path {cfg.code.model_path} --code-path {cfg.code.code_path} --pretrained-kmeans {cfg.code.model_path}'
     print(cmd)
     if not exists(cfg.code.code_path):
-        subprocess.run(cmd, shell=True)
+        subprocess.run(cmd, shell=True, cwd=orig_cwd)
 
     # code and length
     print(f'Dump code and duration')
