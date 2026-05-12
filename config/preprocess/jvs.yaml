@@ -1,0 +1,41 @@
+# @package _group_
+path:
+  jvs:
+    path: /home/yamasawa/data/jvs_ver1
+  processed_path: ./data/jvs
+view:
+  val: 128
+  test_speaker: 1
+  test_wav_per_speaker: 128
+  kmeans_filelist: ./filelists/jvs_kmeans.txt
+  train_filelist: ./filelists/jvs_train.txt
+  val_filelist: ./filelists/jvs_val.txt
+  test_filelist: ./filelists/jvs_test.txt
+audio:
+  sr: 16000
+  normalization: False
+  max_wav_value: 32768.0
+  top_db: 60
+code:
+  nclusters: 200
+  hop_length: 320
+  layer: 12
+  model_path: ./ckpt/jvs_kmeans_200.model
+  code_path: ./codes/jvs_200.txt
+stft:
+  n_fft: 1024
+  window_length: 1024
+  hop_length: 320
+mel:
+  n_mel: 80
+  fmin: 0
+  fmax: 8000
+per_speaker_normalization: True
+pitch:
+  feature: "phoneme" # frame or phoneme
+  normalization: True
+  norm_method: "z_score"
+energy:
+  feature: "phoneme" # frame or phoneme
+  normalization: True
+  norm_method: "z_score"
