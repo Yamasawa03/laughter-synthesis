@@ -99,10 +99,17 @@ def write_ljspeech_item(fid, wav_path, textgrid_path, cfg, phone2id, processed_r
     with open(join(processed_root, "code", fid + ".txt"), "w", encoding="utf-8") as f:
         f.write(" ".join(str(phone2id[phone]) for phone in phones))
 
-    durations = [
-        max(1, int(round((end - start) / hop_length_sec)))
-        for start, end, _ in intervals
-    ]
+    # Compute durations accounting for gaps between intervals (spn removal etc.)
+    total_frames = round(wav.shape[0] / cfg.stft.hop_length)
+    trim_start = intervals[0][0]
+    durations = []
+    for i, (ph_start, ph_end, _) in enumerate(intervals):
+        gap_before = ph_start - (intervals[i - 1][1] if i > 0 else trim_start)
+        dur_sec = (ph_end - ph_start) + gap_before
+        durations.append(max(1, int(round(dur_sec / hop_length_sec))))
+    # Adjust last phoneme so sum matches total wav frames
+    diff = total_frames - sum(durations)
+    durations[-1] = max(1, durations[-1] + diff)
     torch.save(np.array(durations, dtype=np.int64), join(processed_root, "duration", fid + ".pt"))
     return True
 
