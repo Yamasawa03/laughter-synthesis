@@ -1,1 +1,1 @@
-from .laughter import Laughter
+from dataset.laughter import Laughter

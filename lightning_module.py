@@ -41,8 +41,21 @@ class BaselineLightningModule(pl.LightningModule):
 
     def construct_model(self):
         self.model = FastSpeech2(self.cfg)
-        self.vocoder = utils.get_vocoder_16k(self.cfg.model.vocoder.model, join(self.ocwd, self.cfg.model.vocoder.path))
+        self.vocoder = None
         print(self.model)
+
+    def ensure_vocoder(self, verbose=True):
+        if self.vocoder is not None:
+            return True
+        path = join(self.ocwd, self.cfg.model.vocoder.path)
+        ckpt_path = join(path, 'g_16k_320hop')
+        if not os.path.exists(ckpt_path):
+            if verbose:
+                print(f'Skip vocoder load: checkpoint not found at {ckpt_path}')
+            return False
+        self.vocoder = utils.get_vocoder_16k(self.cfg.model.vocoder.model, path)
+        self.vocoder = self.vocoder.to(self.device)
+        return True
     
     def load_acoustic_stats(self):
         path = join(self.ocwd, self.cfg.preprocess.path.processed_path, 'stats.pt')
@@ -148,7 +161,8 @@ class BaselineLightningModule(pl.LightningModule):
         val_energy_loss = torch.stack([item['energy_loss'] for item in outputs]).mean().item()
         
         # wav reconstruction
-        if self.current_epoch % self.cfg.train.audio_log_interval:
+        should_log_audio = bool(self.current_epoch % self.cfg.train.audio_log_interval)
+        if should_log_audio and self.ensure_vocoder(verbose=False):
             i1 = random.randint(0, len(outputs)-1)
             batch = outputs[i1]
             i2 = random.randint(0, batch['mel_gt'].shape[0]-1)
@@ -162,13 +176,16 @@ class BaselineLightningModule(pl.LightningModule):
         self.log('val_pitch_loss', val_pitch_loss, on_epoch=True, prog_bar=True, logger=True)
         self.log('val_energy_loss', val_energy_loss, on_epoch=True, prog_bar=True, logger=True)
         self.log('val_duration_loss', val_duration_loss, on_epoch=True, prog_bar=True, logger=True)
-        if self.current_epoch % self.cfg.train.audio_log_interval:
+        if should_log_audio and self.vocoder is not None:
             self.log_figure(mel_gt_fig, 'val/mel_gt')
             self.log_figure(mel_pred_fig, 'val/mel_pred')
             self.log_audio(wav_recon, 'val/wav_gt', caption=f'{fid}')
             self.log_audio(wav_pred, 'val/wav_pred', caption=f'{fid}')
         
     def test_epoch_end(self, outputs):
+        if not self.ensure_vocoder(verbose=True):
+            print('Skip test audio synthesis because vocoder checkpoint is unavailable.')
+            return
         # synthesize all
         speaker2wavs = defaultdict(list)
         for batch in outputs:
@@ -243,6 +260,8 @@ class BaselineLightningModule(pl.LightningModule):
     def synthesize(self, mel, lengths=None):
         if mel.dim() == 2:
             mel = mel.unsqueeze(0)
+        if not self.ensure_vocoder(verbose=True):
+            raise FileNotFoundError('Vocoder checkpoint is unavailable.')
         self.vocoder.eval()
         wavs = self.vocoder(mel).squeeze(1)
         wavs = wavs.detach().cpu().numpy() * self.cfg.preprocess.audio.max_wav_value

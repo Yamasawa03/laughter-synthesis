@@ -17,7 +17,7 @@ class Laughter:
             path = join(self.root, d, '*.wav')
             fs = glob(path)
             for f in fs:
-                dur = librosa.get_duration(filename=f)
+                dur = librosa.get_duration(path=f)
                 if dur != 0:
                     files.append(f)
         return files

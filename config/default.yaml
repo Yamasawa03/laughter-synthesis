@@ -8,5 +8,3 @@ log_dir: pl_log
 debug: false
 hydra:
   output_subdir: hydra
-  job:
-    chdir: True

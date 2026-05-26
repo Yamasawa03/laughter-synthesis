@@ -1,5 +1,5 @@
-dataset:
-  _target_: data_module.FSDataset
+# @package _group_
+_target_: data_module.FSDataset
 
 train:
   filelist: ./filelists/ljs_train.txt

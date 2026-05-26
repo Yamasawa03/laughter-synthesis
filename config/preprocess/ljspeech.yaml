@@ -1,0 +1,38 @@
+# @package _group_
+path:
+  ljspeech:
+    wav_dir: /home/yamasawa/data/LJSpeech-1.1/wavs
+    textgrid_dir: /home/yamasawa/laughter-synthesis/data/ljspeech/textgrid/TextGrid/LJSpeech
+  processed_path: ./data/ljspeech
+view:
+  val: 1
+  test_wav_per_speaker: 500
+  train_filelist: ./filelists/ljspeech_train.txt
+  val_filelist: ./filelists/ljspeech_val.txt
+  test_filelist: ./filelists/ljspeech_test.txt
+audio:
+  sr: 16000
+  normalization: False
+  max_wav_value: 32768.0
+  top_db: 60
+code:
+  nclusters: 70
+  hop_length: 320
+  phoneme_list: ["AA0", "AA1", "AA2", "AE0", "AE1", "AE2", "AH0", "AH1", "AH2", "AO0", "AO1", "AO2", "AW0", "AW1", "AW2", "AY0", "AY1", "AY2", "B", "CH", "D", "DH", "EH0", "EH1", "EH2", "ER0", "ER1", "ER2", "EY0", "EY1", "EY2", "F", "G", "HH", "IH0", "IH1", "IH2", "IY0", "IY1", "IY2", "JH", "K", "L", "M", "N", "NG", "OW0", "OW1", "OW2", "OY0", "OY1", "OY2", "P", "R", "S", "SH", "T", "TH", "UH0", "UH1", "UH2", "UW0", "UW1", "UW2", "V", "W", "Y", "Z", "ZH", "sp"]
+stft:
+  n_fft: 1024
+  window_length: 1024
+  hop_length: 320
+mel:
+  n_mel: 80
+  fmin: 0
+  fmax: 8000
+per_speaker_normalization: False
+pitch:
+  feature: "phoneme"
+  normalization: True
+  norm_method: "z_score"
+energy:
+  feature: "phoneme"
+  normalization: True
+  norm_method: "z_score"

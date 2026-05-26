@@ -1,0 +1,37 @@
+# @package _group_
+path:
+  jvs:
+    path: /home/yamasawa/data/jvs/jvs_ver1
+  processed_path: ./data/jvs_phoneme
+view:
+  val: 100
+  test_wav_per_speaker: 5
+  train_filelist: ./filelists/jvs_phoneme_train.txt
+  val_filelist: ./filelists/jvs_phoneme_val.txt
+  test_filelist: ./filelists/jvs_phoneme_test.txt
+audio:
+  sr: 16000
+  normalization: False
+  max_wav_value: 32768.0
+  top_db: 60
+code:
+  nclusters: 33
+  hop_length: 320
+  phoneme_list: ["I", "N", "U", "a", "b", "ch", "cl", "d", "e", "f", "g", "gy", "h", "i", "j", "k", "ky", "m", "my", "n", "ny", "o", "p", "pau", "py", "r", "s", "sh", "t", "ts", "u", "w", "y"]
+stft:
+  n_fft: 1024
+  window_length: 1024
+  hop_length: 320
+mel:
+  n_mel: 80
+  fmin: 0
+  fmax: 8000
+per_speaker_normalization: True
+pitch:
+  feature: "phoneme"
+  normalization: True
+  norm_method: "z_score"
+energy:
+  feature: "phoneme"
+  normalization: True
+  norm_method: "z_score"

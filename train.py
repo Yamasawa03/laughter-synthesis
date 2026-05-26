@@ -14,7 +14,7 @@ from lightning_module import BaselineLightningModule
 seed = 1024
 seed_everything(seed)
 
-@hydra.main(config_path='config', config_name='default', version_base=None)
+@hydra.main(config_path='config', config_name='default')
 def train(cfg):
     # loggers
     csvlogger = CSVLogger(save_dir=cfg.log_dir, name='csv')
@@ -24,9 +24,10 @@ def train(cfg):
         loggers.insert(0, tblogger)
 
     # callbacks
-    checkpoint_callback = ModelCheckpoint(dirpath=cfg.log_dir, 
-                            save_top_k=1, save_last=True,
-                            every_n_epochs=1, monitor='val_loss', mode='min')
+    every_n_epochs = cfg.get('every_n_epochs', 50)
+    checkpoint_callback = ModelCheckpoint(dirpath=cfg.log_dir,
+                            save_top_k=-1, save_last=True,
+                            every_n_epochs=every_n_epochs, monitor='val_loss', mode='min')
     
     lr_monitor = LearningRateMonitor()
     callbacks = [checkpoint_callback, lr_monitor]
@@ -44,9 +45,11 @@ def train(cfg):
         callbacks=callbacks,
         limit_train_batches=1.0 if not cfg.debug else 0.1,
         limit_val_batches=1.0 if not cfg.debug else 0.5)
-    trainer.fit(lightning_module, datamodule=datamodule)
+    ckpt_path = cfg.get('ckpt_path', None)
+    trainer.fit(lightning_module, datamodule=datamodule, ckpt_path=ckpt_path)
     print(f'Training ends, best score: {checkpoint_callback.best_model_score}, ckpt path: {checkpoint_callback.best_model_path}')
-    trainer.test(lightning_module, datamodule=datamodule)
+    if cfg.train.run_test_after_fit:
+        trainer.test(lightning_module, datamodule=datamodule)
 
 if __name__ == '__main__':
     train()

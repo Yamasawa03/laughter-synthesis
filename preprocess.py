@@ -16,7 +16,7 @@ from tqdm import tqdm
 from speech2unit import parse_code
 from preprocessor import Preprocessor
 
-@hydra.main(version_base=None, config_path='config', config_name='default')
+@hydra.main(config_path='config', config_name='default')
 def preprocess(cfg):
     cfg = cfg.preprocess
     filelist = []
@@ -45,7 +45,12 @@ def preprocess(cfg):
             wav = wav[:, 0]
         new_wav = wav if sr == cfg.audio.sr else librosa.resample(wav, orig_sr=sr, target_sr=cfg.audio.sr)
         # trim silence
-        new_wav, _ = librosa.effects.trim(new_wav, cfg.audio.top_db, frame_length=cfg.stft.window_length, hop_length=cfg.stft.hop_length)
+        new_wav, _ = librosa.effects.trim(
+            new_wav,
+            top_db=cfg.audio.top_db,
+            frame_length=cfg.stft.window_length,
+            hop_length=cfg.stft.hop_length,
+        )
         new_wav = new_wav / max(abs(new_wav)) * cfg.audio.max_wav_value
         utils.write_audio(new_wav.astype(np.int16), tgt_wav_path, cfg.audio.sr, 'PCM_16')
     
@@ -60,7 +65,8 @@ def preprocess(cfg):
     # generate code
     os.makedirs('ckpt', exist_ok=True)
     os.makedirs('codes', exist_ok=True)
-    cmd = f'CUDA_VISIBLE_DEVICES=1 python3 speech2unit.py --train-filelist {cfg.view.kmeans_filelist} --nclusters {cfg.code.nclusters} --feature-type hubert --model-path facebook/hubert-base-ls960 --layer {cfg.code.layer} --test-filelist {cfg.view.kmeans_filelist} --kmeans-path {cfg.code.model_path} --code-path {cfg.code.code_path} --pretrained-kmeans {cfg.code.model_path}'
+    gpu_id = os.environ.get("LS_GPU_ID", "0")
+    cmd = f'CUDA_VISIBLE_DEVICES={gpu_id} python3 speech2unit.py --train-filelist {cfg.view.kmeans_filelist} --nclusters {cfg.code.nclusters} --feature-type hubert --model-path facebook/hubert-base-ls960 --layer {cfg.code.layer} --test-filelist {cfg.view.kmeans_filelist} --kmeans-path {cfg.code.model_path} --code-path {cfg.code.code_path} --pretrained-kmeans {cfg.code.model_path}'
     print(cmd)
     if not exists(cfg.code.code_path):
         subprocess.run(cmd, shell=True)
