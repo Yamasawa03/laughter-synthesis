@@ -11,6 +11,7 @@ class FastSpeech2Loss(nn.Module):
         self.energy_feature_level = cfg.preprocess.energy.feature
         self.mse_loss = nn.MSELoss()
         self.mae_loss = nn.L1Loss()
+        self.duration_loss_weight = getattr(cfg.train, 'duration_loss_weight', 1.0)
 
     def forward(self, batch, output, step):
         """forward method for FastSpeech2Loss
@@ -66,7 +67,7 @@ class FastSpeech2Loss(nn.Module):
         duration_loss = self.mse_loss(log_duration_predictions, log_duration_targets)
 
         total_loss = (
-            mel_loss + postnet_mel_loss + duration_loss + pitch_loss + energy_loss
+            mel_loss + postnet_mel_loss + self.duration_loss_weight * duration_loss + pitch_loss + energy_loss
         )
         
         return dict(

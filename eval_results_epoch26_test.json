@@ -1,0 +1,11 @@
+{
+  "checkpoint": "pl_log_exp016_02/epoch26.ckpt",
+  "split": "test",
+  "n_samples": 500,
+  "mel_mae": 0.6140504128932953,
+  "mel_postnet_mae": 0.6142529268860817,
+  "pitch_mse": 0.9980158491134643,
+  "energy_mse": 0.523854071855545,
+  "duration_mse": 0.08130325738713146,
+  "total_loss": 2.831476518135518
+}

@@ -1,3 +1,4 @@
+# @package _group_
 trainer:
   accelerator: 'gpu'
   devices: 1
@@ -8,6 +9,8 @@ trainer:
   gradient_clip_val: 1.0
 
 audio_log_interval: 10
+run_test_after_fit: true
 lr: 1.0
 warmup_steps: 4000
 early_stop: true
+duration_loss_weight: 1.0

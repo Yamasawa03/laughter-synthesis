@@ -19,6 +19,9 @@ def read_filelist(path, delimiter='|'):
     return lines
 
 def write_filelist(filelists, path, delimiter='|'):
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(path, 'w', encoding='utf8') as f:
         for line in filelists:
             f.write(delimiter.join(line) + '\n')
@@ -45,7 +48,7 @@ def load_audio(path, to_torch=False):
 def load_audio_with_resample(path, to_torch=False, target_sr=16000):
     wav, sr = sf.read(path)
     if target_sr != sr:
-        wav = librosa.resample(wav, sr, target_sr)
+        wav = librosa.resample(wav, orig_sr=sr, target_sr=target_sr)
     if len(wav.shape) == 1:
         wav = wav[None, :]
     if to_torch:

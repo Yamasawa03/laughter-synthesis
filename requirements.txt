@@ -8,7 +8,7 @@ matplotlib
 seaborn
 hydra-core
 pyworld
-transformers
+transformers==4.30.2
 pysptk
 nnmnkwii
 seaborn
