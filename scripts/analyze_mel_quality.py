@@ -29,7 +29,7 @@ import utils
 
 seed_everything(1024)
 
-CKPT_PATH = "/home/yamasawa/laughter-synthesis/pl_log/epoch=26-step=9288.ckpt"
+CKPT_PATH = "/home/yamasawa/laughter-synthesis/outputs/2026-05-11/00-32-12/pl_log_exp007/epoch=26-step=9288.ckpt"
 OUTPUT_DIR = "/home/yamasawa/laughter-synthesis/mel_analysis_results"
 N_SAMPLES_PLOT = 5
 

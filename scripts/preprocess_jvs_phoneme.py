@@ -90,8 +90,32 @@ def run_mfa(wav_dir, dictionary_path, output_dir):
     if any(name.endswith(".TextGrid") for name in os.listdir(output_dir)):
         return
     acoustic_model = os.environ.get("MFA_ACOUSTIC_MODEL", "japanese_mfa")
-    command = os.environ.get("MFA_COMMAND", "mfa")
-    cmd = [command, "align", wav_dir, dictionary_path, acoustic_model, output_dir, "--clean"]
+    use_docker = os.environ.get("MFA_USE_DOCKER", "0") == "1"
+    if use_docker:
+        home = os.path.expanduser("~")
+        uid_gid = f"{os.getuid()}:{os.getgid()}"
+        ls_host = os.path.join(home, "laughter-synthesis")
+        ls_container = "/laughter-synthesis"
+        def to_container_path(p):
+            return p.replace(ls_host, ls_container)
+        cmd = [
+            "docker", "run", "--rm", "--user", uid_gid,
+            "-e", "NUMBA_CACHE_DIR=/tmp/numba_cache",
+            "-e", "MFA_ROOT_DIR=/mfa_home",
+            "-e", "MPLCONFIGDIR=/tmp/mpl",
+            "-v", f"{home}/mfa_home:/mfa_home",
+            "-v", f"{ls_host}:{ls_container}",
+            "mmcauliffe/montreal-forced-aligner:v2.2.17",
+            "mfa", "align",
+            to_container_path(wav_dir),
+            to_container_path(dictionary_path),
+            acoustic_model,
+            to_container_path(output_dir),
+            "--clean",
+        ]
+    else:
+        command = os.environ.get("MFA_COMMAND", "mfa")
+        cmd = [command, "align", wav_dir, dictionary_path, acoustic_model, output_dir, "--clean"]
     print(" ".join(cmd))
     subprocess.run(cmd, check=True)
 
@@ -108,12 +132,16 @@ def normalize_mfa_phone(phone):
 def read_textgrid_intervals(path):
     with open(path, encoding="utf-8") as f:
         content = f.read()
+    phones_match = re.search(r'name\s*=\s*"phones".*?(?=item\s*\[|$)', content, re.DOTALL)
+    if phones_match is None:
+        return []
+    phones_section = phones_match.group(0)
     intervals = []
     pattern = re.compile(
         r"xmin =\s*([0-9.]+)\s+xmax =\s*([0-9.]+)\s+text =\s*\"([^\"]*)\"",
         re.MULTILINE,
     )
-    for start, end, label in pattern.findall(content):
+    for start, end, label in pattern.findall(phones_section):
         phone = normalize_mfa_phone(label)
         if phone is not None:
             intervals.append((float(start), float(end), phone))
@@ -190,7 +218,7 @@ def split_filelists(dataset, processed_fids, cfg, orig_cwd):
             utils.write_filelist(filelist, out_path)
 
 
-@hydra.main(version_base=None, config_path="../config", config_name="default")
+@hydra.main(config_path="../config", config_name="default")
 def preprocess(cfg):
     orig_cwd = hydra.utils.get_original_cwd()
     cfg = cfg.preprocess
