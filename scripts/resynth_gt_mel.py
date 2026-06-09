@@ -63,11 +63,15 @@ def read_file_ids(file_list):
 def extract_mel_tensor(obj):
     if isinstance(obj, torch.Tensor):
         return obj
+    if isinstance(obj, np.ndarray):
+        return torch.from_numpy(obj)
     if isinstance(obj, dict):
         for key in ("mel", "mel_gt", "gt_mel", "mel_spectrogram"):
             value = obj.get(key)
             if isinstance(value, torch.Tensor):
                 return value
+            if isinstance(value, np.ndarray):
+                return torch.from_numpy(value)
     raise TypeError(f"Unsupported mel object type: {type(obj)!r}")
 
 
