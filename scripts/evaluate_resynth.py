@@ -126,7 +126,7 @@ def compute_stats(values, name):
     }
 
 
-def save_plots(stats_dict, eval_items, output_dir):
+def save_plots(stats_dict, eval_items, output_dir, exp_id):
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -156,7 +156,7 @@ def save_plots(stats_dict, eval_items, output_dir):
                        label=f"Median: {s['median']:.3f}")
         ax.set_xlabel(xlabel)
         ax.set_ylabel("Count")
-        ax.set_title(f"EXP-021-02: {title} Distribution (N={len(values)})")
+        ax.set_title(f"{exp_id}: {title} Distribution (N={len(values)})")
         ax.legend()
         ax.grid(True, alpha=0.3)
         png_path = output_dir / f"distribution_{key}.png"
@@ -172,6 +172,7 @@ def parse_args():
     parser.add_argument("--gt_wav_dir", default=None)
     parser.add_argument("--resynth_wav_dir", default=None)
     parser.add_argument("--no_plots", action="store_true")
+    parser.add_argument("--exp_id", default="EXP-021-02")
     return parser.parse_args()
 
 
@@ -292,8 +293,8 @@ def main():
         stats["stoi"] = compute_stats(stoi_vals, "STOI")
 
     eval_results = {
-        "experiment": "EXP-021-02",
-        "description": "GT mel resynthesis quality evaluation (HiFi-GAN)",
+        "experiment": args.exp_id,
+        "description": f"Wav-level quality evaluation (MCD/PESQ/STOI) for {args.exp_id}",
         "n_total": len(entries),
         "n_evaluated": len(valid),
         "n_errors": len(entries) - len(valid),
@@ -335,7 +336,7 @@ def main():
     print(f"Screening: {screen_path}")
 
     if not args.no_plots:
-        save_plots(stats, eval_items, output_dir)
+        save_plots(stats, eval_items, output_dir, args.exp_id)
 
     print("\n=== Summary ===")
     for metric, s in stats.items():
