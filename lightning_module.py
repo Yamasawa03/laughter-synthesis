@@ -48,12 +48,14 @@ class BaselineLightningModule(pl.LightningModule):
         if self.vocoder is not None:
             return True
         path = join(self.ocwd, self.cfg.model.vocoder.path)
-        ckpt_path = join(path, 'g_16k_320hop')
+        config_name = getattr(self.cfg.model.vocoder, 'config_name', 'config_16k_320hop.json')
+        ckpt_name = getattr(self.cfg.model.vocoder, 'ckpt_name', 'g_16k_320hop')
+        ckpt_path = join(path, ckpt_name)
         if not os.path.exists(ckpt_path):
             if verbose:
                 print(f'Skip vocoder load: checkpoint not found at {ckpt_path}')
             return False
-        self.vocoder = utils.get_vocoder_16k(self.cfg.model.vocoder.model, path)
+        self.vocoder = utils.get_vocoder(self.cfg.model.vocoder.model, path, config_name, ckpt_name)
         self.vocoder = self.vocoder.to(self.device)
         return True
     

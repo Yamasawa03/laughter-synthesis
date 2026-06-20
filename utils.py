@@ -85,17 +85,17 @@ def downsample(pitch, down_rate):
     return pitch
 
 def compute_robust_pitch(wav, sr, hop_length):
-    hops = [320, 160, 80, 40, 20]
-    assert hop_length == 320, f"hop_length {hop_length} should be 320 in this method"
+    hops = [hop_length, hop_length // 2, hop_length // 4, hop_length // 8, hop_length // 16]
     for hop in hops:
+        if hop < 1:
+            break
         pitch = pitch_world(wav, sr, hop)
-        if np.sum(pitch != 0 ) <= 1:
-            #print(f'Fail to extract f0 for {wavfile} with hop {hop}')
+        if np.sum(pitch != 0) <= 1:
             continue
         break
     else:
         return None
-    pitch = downsample(pitch, 320//hop)
+    pitch = downsample(pitch, hop_length // hop)
     return pitch
 
 def compute_energy(spec):
@@ -161,17 +161,19 @@ def pad_torch(bs, max_len=None, value=0):
     ]
     return out
 
-def get_vocoder_16k(name, path):
+def get_vocoder(name, path, config_name="config_16k_320hop.json", ckpt_name="g_16k_320hop"):
     print(f'Load vocoder: {name}')
-    with open(join(path, "config_16k_320hop.json"), "r") as f:
+    with open(join(path, config_name), "r") as f:
         config = json.load(f)
     config = hifigan.AttrDict(config)
     vocoder = hifigan.Generator(config)
-    ckpt = torch.load(join(path, "g_16k_320hop"), map_location=lambda s, l: s)
+    ckpt = torch.load(join(path, ckpt_name), map_location=lambda s, l: s)
     vocoder.load_state_dict(ckpt["generator"], strict=True)
     vocoder.eval()
     vocoder.remove_weight_norm()
     return vocoder
+
+get_vocoder_16k = get_vocoder
 
 def get_transformer_scheduler(optimizer, warmup_steps, d_model, last_epoch=-1, verbose=True):
     def lr_lambda(step):

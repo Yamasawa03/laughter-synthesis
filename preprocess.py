@@ -66,7 +66,7 @@ def preprocess(cfg):
     os.makedirs('ckpt', exist_ok=True)
     os.makedirs('codes', exist_ok=True)
     gpu_id = os.environ.get("LS_GPU_ID", "0")
-    cmd = f'CUDA_VISIBLE_DEVICES={gpu_id} python3 speech2unit.py --train-filelist {cfg.view.kmeans_filelist} --nclusters {cfg.code.nclusters} --feature-type hubert --model-path facebook/hubert-base-ls960 --layer {cfg.code.layer} --test-filelist {cfg.view.kmeans_filelist} --kmeans-path {cfg.code.model_path} --code-path {cfg.code.code_path} --pretrained-kmeans {cfg.code.model_path}'
+    cmd = f'CUDA_VISIBLE_DEVICES={gpu_id} python3 speech2unit.py --train-filelist {cfg.view.kmeans_filelist} --nclusters {cfg.code.nclusters} --feature-type hubert --model-path facebook/hubert-large-ll60k --layer {cfg.code.layer} --test-filelist {cfg.view.kmeans_filelist} --kmeans-path {cfg.code.model_path} --code-path {cfg.code.code_path} --pretrained-kmeans {cfg.code.model_path}'
     print(cmd)
     if not exists(cfg.code.code_path):
         subprocess.run(cmd, shell=True)
