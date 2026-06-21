@@ -29,8 +29,16 @@ def train(cfg):
                             save_top_k=-1, save_last=True,
                             every_n_epochs=every_n_epochs, monitor='val_loss', mode='min')
     
+    best_checkpoint_callback = ModelCheckpoint(
+        dirpath=cfg.log_dir,
+        save_top_k=1,
+        filename='best-{epoch}-{val_loss:.4f}',
+        monitor='val_loss',
+        mode='min'
+    )
+
     lr_monitor = LearningRateMonitor()
-    callbacks = [checkpoint_callback, lr_monitor]
+    callbacks = [checkpoint_callback, best_checkpoint_callback, lr_monitor]
     if cfg.train.early_stop:
         earlystop_callback = EarlyStopping(monitor='val_loss', min_delta=1e-3,
                                 patience=10, mode='min', check_finite=True,
@@ -47,7 +55,7 @@ def train(cfg):
         limit_val_batches=1.0 if not cfg.debug else 0.5)
     ckpt_path = cfg.get('ckpt_path', None)
     trainer.fit(lightning_module, datamodule=datamodule, ckpt_path=ckpt_path)
-    print(f'Training ends, best score: {checkpoint_callback.best_model_score}, ckpt path: {checkpoint_callback.best_model_path}')
+    print(f'Training ends, best score: {best_checkpoint_callback.best_model_score}, ckpt path: {best_checkpoint_callback.best_model_path}')
     if cfg.train.run_test_after_fit:
         trainer.test(lightning_module, datamodule=datamodule)
 
