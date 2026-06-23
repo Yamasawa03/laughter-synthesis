@@ -164,3 +164,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 eval_exp016_04/
+exp018_*/
+pl_log_*/
+output_manifest.csv
+verify_hubert.py
