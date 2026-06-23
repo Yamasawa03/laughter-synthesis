@@ -27,7 +27,7 @@ class DataModule(pl.LightningDataModule):
         #ds = hydra.utils.instantiate(self.cfg.dataset.dataset, phase, self.cfg)
         ds = FSDataset(phase, self.cfg)
         sampler = None
-        dl = DataLoader(ds, batch_size, phase_cfg.shuffle, num_workers=8, sampler=sampler, collate_fn=ds.collate_fn)
+        dl = DataLoader(ds, batch_size, phase_cfg.shuffle, num_workers=0, sampler=sampler, collate_fn=ds.collate_fn)
 
         return dl
 
