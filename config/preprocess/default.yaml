@@ -1,4 +1,4 @@
-# @package _group_
+# @package preprocess
 path:
   raw_path: ./data/LJS
   processed_path: ./data/LJS

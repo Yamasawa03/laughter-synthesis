@@ -1,4 +1,4 @@
-# @package _group_
+# @package model
 transformer:
   encoder_layer: 4
   encoder_head: 2
