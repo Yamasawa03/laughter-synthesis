@@ -168,3 +168,6 @@ exp018_*/
 pl_log_*/
 output_manifest.csv
 verify_hubert.py
+filelists/ljspeech_hubert.txt
+filelists/ljspeech_kmeans.txt
+filelists/mixed_kmeans.txt
