@@ -301,7 +301,12 @@ class BaselineLightningModule(pl.LightningModule):
         """
         fig, axes = plt.subplots(1, 1, squeeze=False)
         axis = axes[0][0]
-        pmin, pmax, pmean, pstd, emin, emax = self.stats['pitch']['min'], self.stats['pitch']['max'], self.stats['pitch']['mean'][spkr], self.stats['pitch']['std'][spkr], self.stats['energy']['min'], self.stats['energy']['max']
+        # 話者別pitch統計のキーがバッチの話者ラベルと一致しない場合のフォールバック。
+        # 単一話者コーパス(LJSpeech)では前処理が'default'キーで保存しているが、
+        # バッチのspkrラベルは'LJSpeech'になり KeyError で検証コールバックが落ちる（EXP-042-03）。
+        pmean_by_spkr, pstd_by_spkr = self.stats['pitch']['mean'], self.stats['pitch']['std']
+        skey = spkr if spkr in pmean_by_spkr else ('default' if 'default' in pmean_by_spkr else next(iter(pmean_by_spkr)))
+        pmin, pmax, pmean, pstd, emin, emax = self.stats['pitch']['min'], self.stats['pitch']['max'], pmean_by_spkr[skey], pstd_by_spkr[skey], self.stats['energy']['min'], self.stats['energy']['max']
         
         pmin = self.recover_pitch(pmin, pmean, pstd)
         pmax = self.recover_pitch(pmax, pmean, pstd)
