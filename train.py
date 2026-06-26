@@ -54,7 +54,23 @@ def train(cfg):
         limit_train_batches=1.0 if not cfg.debug else 0.1,
         limit_val_batches=1.0 if not cfg.debug else 0.5)
     ckpt_path = cfg.get('ckpt_path', None)
-    trainer.fit(lightning_module, datamodule=datamodule, ckpt_path=ckpt_path)
+    strict_load = cfg.get('strict_load', True)
+
+    if ckpt_path and not strict_load:
+        import torch
+        checkpoint = torch.load(ckpt_path, map_location='cpu')
+        state_dict = checkpoint.get('state_dict', checkpoint)
+        model_state = lightning_module.state_dict()
+        filtered = {k: v for k, v in state_dict.items()
+                    if k in model_state and v.shape == model_state[k].shape}
+        skipped = sorted(set(state_dict.keys()) - set(filtered.keys()))
+        lightning_module.load_state_dict(filtered, strict=False)
+        print(f"Cross-config resume: loaded {len(filtered)}/{len(state_dict)} keys")
+        if skipped:
+            print(f"Skipped keys ({len(skipped)}): {skipped[:5]}{'...' if len(skipped) > 5 else ''}")
+        trainer.fit(lightning_module, datamodule=datamodule)
+    else:
+        trainer.fit(lightning_module, datamodule=datamodule, ckpt_path=ckpt_path)
     print(f'Training ends, best score: {best_checkpoint_callback.best_model_score}, ckpt path: {best_checkpoint_callback.best_model_path}')
     if cfg.train.run_test_after_fit:
         trainer.test(lightning_module, datamodule=datamodule)
