@@ -53,6 +53,9 @@ FILE_LIST = os.environ.get("FILE_LIST")
 EXP_ID = os.environ.get("EXP_ID", "EXP-024")
 MAX_SAMPLES = int(os.environ.get("MAX_SAMPLES", "0")) or None
 SAVE_PROSODY = os.environ.get("SAVE_PROSODY") == "1"
+USE_GT_PITCH = os.environ.get("USE_GT_PITCH") == "1"
+USE_GT_ENERGY = os.environ.get("USE_GT_ENERGY") == "1"
+USE_GT_DURATION = os.environ.get("USE_GT_DURATION") == "1"
 
 MANIFEST_FIELDS = [
     "fid",
