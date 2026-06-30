@@ -15,6 +15,9 @@ Environment variables:
     EXP_ID         - experiment id for eval_metadata.json (optional, default: EXP-024)
     SAVE_PROSODY   - save prosody predictions/GT to pred_prosody when set to 1
     MAX_SAMPLES    - limit number of samples (optional, default: all)
+    USE_GT_PITCH   - use GT pitch instead of predicted (optional, set to 1)
+    USE_GT_ENERGY  - use GT energy instead of predicted (optional, set to 1)
+    USE_GT_DURATION - use GT duration instead of predicted (optional, set to 1)
 
 Usage:
     cd ~/laughter-synthesis
