@@ -174,14 +174,15 @@ def main(cfg):
         batch = {k: v.cuda() if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
 
         with torch.no_grad():
-            gt_pitch = batch.pop("pitch")
-            gt_energy = batch.pop("energy")
-            gt_duration = batch.pop("duration")
-            mel_gt, mel_len_gt, mel_max_len = (
-                batch.pop("mel"),
-                batch.pop("mel_length"),
-                batch.pop("mel_max_length"),
-            )
+            gt_pitch = batch["pitch"] if USE_GT_PITCH else batch.pop("pitch")
+            gt_energy = batch["energy"] if USE_GT_ENERGY else batch.pop("energy")
+            gt_duration = batch["duration"] if USE_GT_DURATION else batch.pop("duration")
+            mel_gt = batch.pop("mel")
+            if USE_GT_DURATION:
+                mel_len_gt = batch["mel_length"]
+            else:
+                mel_len_gt = batch.pop("mel_length")
+                batch.pop("mel_max_length")
 
             output = model(batch)
             pred_mel = output["mel_postnet_pred"]
